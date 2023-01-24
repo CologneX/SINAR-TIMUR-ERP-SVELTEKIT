@@ -7,6 +7,8 @@
 	if($page.url.pathname === '/'){
 		throw redirect(307, '/dashboard')
 	}
+
+	// global.EventSource = require('eventsource');
 </script>
 
 <slot />

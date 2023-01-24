@@ -2,14 +2,14 @@
 	export let data;
 	var { barang } = data;
 
+	
 	import {
-		// Utilities
 		createDataTableStore,
 		dataTableHandler,
-		// Svelte Actions
 		tableInteraction,
 		tableA11y
 	} from '@skeletonlabs/skeleton';
+
 
 	import { Paginator } from '@skeletonlabs/skeleton';
 	import { GradientHeading } from '@skeletonlabs/skeleton';
@@ -17,6 +17,13 @@
 	import type { ModalSettings, ModalComponent } from '@skeletonlabs/skeleton';
 	import { triggerHapus } from '$lib/utilities/Modal/TempDeleteModal';
 	import { rupiah } from '$lib/utils.js';
+	import TempCreateModal from '$lib/utilities/Modal/TempCreateModal.svelte';
+	import TempEditModal from '$lib/utilities/Modal/TempEditModal.svelte';
+	import PocketBase from 'pocketbase';
+	import { onMount } from 'svelte';
+	const pb = new PocketBase('http://127.0.0.1:8090');
+	
+
 	const dataTableStore: any = createDataTableStore(
 		barang,
 		{
@@ -27,8 +34,15 @@
 	);
 	dataTableStore.subscribe((barang) => dataTableHandler(barang));
 
-	import TempCreateModal from '$lib/utilities/Modal/TempCreateModal.svelte';
-	function modalComponentForm(): void {
+	//let var tipeHtml from TempCreateModal.svelte = 'barang'
+	export let tipeHtml = 'Barang';
+
+	//export tipeHtml to TempCreateModal.svelte
+	$: tipeHtml = 'Barang';
+
+
+	
+	function tambahBarang(): void {
 		const c: ModalComponent = { ref: TempCreateModal };
 		const d: ModalSettings = {
 			type: 'component',
@@ -42,22 +56,43 @@
 		modalStore.trigger(d);
 	}
 
-	import PocketBase from 'pocketbase';
-	const pb = new PocketBase('http://127.0.0.1:8090');
-	pb.collection('barang').subscribe('*', async ({ action }) => {
-		if (action === 'delete') {
-			barang = await pb.collection('barang').getFullList();
+
+	//Subscribe to changes in barang collection
+	onMount(async () => {
+		pb.collection('barang').subscribe('*', async ({ action }) => {
+		if (action === 'delete' || action === 'create' || action === 'update') { 
+			barang = await pb.collection('barang').getFullList(100,{
+				filter: 'status_delete=False' 
+			});
 			dataTableStore.updateSource(barang);
-		}
-		else if (action === 'create') {
-			barang = await pb.collection('barang').getFullList();
-			dataTableStore.updateSource(barang);
-		}
-		else if (action === 'update') {
-			barang = await pb.collection('barang').getFullList();
-			dataTableStore.updateSource(barang);
-		}
+		}});
 	});
+
+	function refresh() {
+		pb.collection('barang').getFullList(100,{
+			filter: 'status_delete=False' 
+		}).then((data) => {
+			barang = data;
+			dataTableStore.updateSource(barang);
+		})
+	}
+
+
+	//function to update barang with id
+	function updateBarang(id: any) {
+		const c: ModalComponent = { ref: TempEditModal};
+		const d: ModalSettings = {
+			type: 'component',
+			title: 'Update Barang '+ barang.find((items) => items.id === id).namaBarang,
+			body: 'Informasi Barang',
+			meta: { barang: barang.find((items) => items.id === id) },
+			component: c,
+			response: (r: any) => {
+				if (r) console.log('response:', r);
+			}
+		};
+		modalStore.trigger(d);
+	}
 	function hapusBarang(id) {
 		triggerHapus('barang', id);
 	}
@@ -85,7 +120,7 @@
 			class="mt-2 mb-2 w-1/2 focus:w-full"
 		/>
 		<div class="flex justify-end">
-			<button class="btn btn-ghost-secondary btn-base"
+			<button class="btn btn-ghost-secondary btn-base" on:click={refresh}
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
@@ -101,7 +136,7 @@
 					/>
 				</svg>
 			</button>
-			<button class="btn btn-ghost-secondary btn-base" on:click={modalComponentForm}
+			<button class="btn btn-ghost-secondary btn-base" on:click={tambahBarang}
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
@@ -144,7 +179,10 @@
 					<td class="table-cell-fit"
 						><button class="btn btn-ringed-error btn-sm" on:click={() => hapusBarang(row.id)}
 							>Hapus</button
-						></td
+						>
+						<button class="btn btn-ringed-warning btn-sm" on:click={() => updateBarang(row.id)}
+							>Edit</button>
+						</td
 					>
 				</tr>
 			{/each}

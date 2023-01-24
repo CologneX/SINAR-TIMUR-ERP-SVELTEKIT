@@ -7,6 +7,9 @@
 	const storeValue: Writable<number> = writable(1);
 	import { Modal, modalStore } from '@skeletonlabs/skeleton';
 	import { Toast, toastStore } from '@skeletonlabs/skeleton';
+	export let data;
+	const name = data.user.name;
+	// const avatar = data.user.avatar;
 </script>
 
 <!-- Side navbar for admin page that consists of Dashboard, Barang, Pelanggan, Supplier buttons-->
@@ -153,8 +156,8 @@
 				</svg>
 			</AppRailTile>
 			<svelte:fragment slot="trail">
-				<AppRailTile class="rounded-lg" label='Yurike Liana'
-					><Avatar initials="Yurike Liana" /></AppRailTile
+				<AppRailTile class="rounded-lg" label='{name}'
+					><Avatar initials={name}/></AppRailTile
 				>
 
 				<AppRailTile

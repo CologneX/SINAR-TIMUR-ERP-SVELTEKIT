@@ -6,10 +6,11 @@ export function triggerToast(pesan, type): void {
         message: pesan,
         // Optional: Presets for primary | secondary | tertiary | warning
         preset: type,
-        classes:'br',
+        classes: 'postion: bottom-right',
         // Optional: The auto-hide settings
         autohide: true,
-        timeout: 4000,
+        timeout: 5000,
+        
         // Optional: Adds a custom action button
     };
     toastStore.trigger(t);
