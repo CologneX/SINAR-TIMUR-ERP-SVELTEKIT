@@ -13,7 +13,7 @@ export function triggerHapus(tabel, id): void {
 				.getOne(id)
 				.then((res) => {
 					res.status_delete = true;
-					pb.collection('Barang').update(id, res);
+					pb.collection(tabel).update(id, res);
 				});
 			triggerToast(tabel + ' berhasil dihapus', 'primary');
 		} catch (err:any) {
@@ -22,9 +22,8 @@ export function triggerHapus(tabel, id): void {
 	}
 	const confirm: ModalSettings = {
 		type: 'confirm',
-		title: 'Hapus Barang?',
-		body: 'Apakah anda mau menghapus barang?',
-		// TRUE if confirm pressed, FALSE if cancel pressed
+		title: 'Hapus '+tabel+'?',
+		body: 'Apakah anda mau menghapus '+tabel+'?',
 		response: (r: boolean) => (r === true ? hapusBarang() : null),
 		buttonTextCancel: 'Batal',
 		buttonTextConfirm: 'Hapus'

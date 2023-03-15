@@ -1,51 +1,86 @@
 <script lang="ts">
 	export let data;
-	const { users } = data;
+	var { pelanggan } = data;
 
+	
 	import {
-		// Utilities
 		createDataTableStore,
 		dataTableHandler,
-		// Svelte Actions
 		tableInteraction,
 		tableA11y
 	} from '@skeletonlabs/skeleton';
+
 
 	import { Paginator } from '@skeletonlabs/skeleton';
 	import { GradientHeading } from '@skeletonlabs/skeleton';
 	import { Modal, modalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings, ModalComponent } from '@skeletonlabs/skeleton';
-	const dataTableStore = createDataTableStore(
-		// Pass your source data here:
-		users,
-		// Provide optional settings:
+	import { triggerHapus } from '$lib/utilities/Modal/Pelanggan/TempDeleteModal';
+	import { rupiah } from '$lib/utils.js';
+	import TempCreateModal from '$lib/utilities/Modal/Pelanggan/TempCreateModal.svelte';
+	import TempEditModal from '$lib/utilities/Modal/Pelanggan/TempEditModal.svelte';
+	import PocketBase from 'pocketbase';
+	import { onMount } from 'svelte';
+	const pb = new PocketBase('http://127.0.0.1:8090');
+	
+
+	const dataTableStore: any = createDataTableStore(
+		pelanggan,
 		{
-			// The current search term.
 			search: '',
-			// The current sort key.
 			sort: '',
-			// Paginator component settings.
 			pagination: { offset: 0, limit: 10, size: 0, amounts: [10, 25, 50, 100] }
 		}
 	);
-	// This automatically handles search, sort, etc when the model updates.
-	dataTableStore.subscribe((users) => dataTableHandler(users));
-	// dataTableStore.updateSource(products)
+	dataTableStore.subscribe((pelanggan) => dataTableHandler(pelanggan));
 
-	// modal untuk hapus
-
-	function triggerConfirm(): void {
-		const confirm: ModalSettings = {
-			type: 'confirm',
-			title: 'Hapus Pelanggan?',
-			body: 'Apakah anda mau menghapus pelanggan?',
-			// TRUE if confirm pressed, FALSE if cancel pressed
-			response: (r: boolean) => console.log('response:', r),
-			// Optionally override the button text
-			buttonTextCancel: 'Batal',
-			buttonTextConfirm: 'Hapus'
+	
+	function tambahPelanggan(): void {
+		const c: ModalComponent = { ref: TempCreateModal };
+		const d: ModalSettings = {
+			type: 'component',
+			title: 'Masukkan Pelanggan Baru',
+			body: 'Informasi Pelanggan Baru',
+			component: c,
 		};
-		modalStore.trigger(confirm);
+		modalStore.trigger(d);
+	}
+
+	//Subscribe to changes in pelanggan collection
+	onMount(async () => {
+		pb.collection('pelanggan').subscribe('*', async ({ action }) => {
+		if (action === 'delete' || action === 'create' || action === 'update') { 
+			pelanggan = await pb.collection('pelanggan').getFullList(100,{
+				filter: 'status_delete=False' 
+			});
+			dataTableStore.updateSource(pelanggan);
+		}});
+	});
+
+	function refresh() {
+		pb.collection('pelanggan').getFullList(100,{
+			filter: 'status_delete=False' 
+		}).then((data) => {
+			pelanggan = data;
+			dataTableStore.updateSource(pelanggan);
+		})
+	}
+
+
+	//function to update barang with id
+	function updatePelanggan(id: any) {
+		const c: ModalComponent = { ref: TempEditModal};
+		const d: ModalSettings = {
+			type: 'component',
+			title: 'Update Pelanggan '+ pelanggan.find((items) => items.id === id).namaPelanggan,
+			body: 'Informasi Pelanggan',
+			meta: { pelanggan: pelanggan.find((items) => items.id === id), tabel: 'Pelanggan' },
+			component: c,
+		};
+		modalStore.trigger(d);
+	}
+	function hapusPelanggan(id) {
+		triggerHapus('pelanggan', id);
 	}
 </script>
 
@@ -54,7 +89,6 @@
 </svelte:head>
 
 <div class="table-container p-8 ">
-	<!-- <a data-sveltekit-reload href="/barang">Path</a> -->
 	<GradientHeading
 		tag="h1"
 		direction="bg-gradient-to-r"
@@ -62,16 +96,15 @@
 		to="to-secondary-500"
 		class="mb-2">Pelanggan</GradientHeading
 	>
-	<!-- <h1 class="w-1/9 text-transparent bg-gradient-to-r from-primary-500 to-secondary-500 text-transparent bg-clip-text">Barang</h1> -->
 	<div class="grid grid-cols-2 items-center gap-1">
 		<input
 			bind:value={$dataTableStore.search}
 			type="search"
-			placeholder="Cari Barang..."
+			placeholder="Cari Pelanggan..."
 			class="mt-2 mb-2 w-1/2 focus:w-full"
 		/>
 		<div class="flex justify-end">
-			<button class="btn btn-ghost-secondary btn-base"
+			<button class="btn btn-ghost-secondary btn-base" on:click={refresh}
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
@@ -87,7 +120,7 @@
 					/>
 				</svg>
 			</button>
-			<button class="btn btn-ghost-secondary btn-base" on:click={triggerConfirm}
+			<button class="btn btn-ghost-secondary btn-base" on:click={tambahPelanggan}
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
@@ -96,11 +129,7 @@
 					stroke="currentColor"
 					class="w-6 h-6"
 				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"
-					/>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
 				</svg>
 			</button>
 		</div>
@@ -114,8 +143,9 @@
 		>
 			<tr>
 				<th data-sort="id">ID</th>
-				<th data-sort="firstName">Nama</th>
-				<th data-sort="price">Harga</th>
+				<th data-sort="namaPelanggan">Nama Pelanggan</th>
+				<th data-sort="nomorPelanggan">No Telp</th>
+				<th data-sort="alamatPelanggan">Alamat</th>
 				<th />
 			</tr>
 		</thead>
@@ -123,19 +153,28 @@
 			{#each $dataTableStore.filtered as row, rowIndex}
 				<tr class:table-row-checked={row.dataTableChecked}>
 					<td class="table-cell-fit">{row.id}</td>
-					<td>{row.firstName}</td>
-					<td>{row.image}</td>
+					<td>{row.namaPelanggan}</td>
+					<td>{row.nomorPelanggan}</td>
+					<td>{row.alamatPelanggan}</td>
 					<td class="table-cell-fit"
-						><button class="btn btn-ringed-error btn-sm" on:click={triggerConfirm}>Hapus</button
-						></td
+						><button class="btn btn-ringed-error btn-sm" on:click={() => hapusPelanggan(row.id)}
+							>Hapus</button
+						>
+						<button class="btn btn-ringed-warning btn-sm" on:click={() => updatePelanggan(row.id)}
+							>Edit</button>
+						</td
 					>
 				</tr>
 			{/each}
+			{#if $dataTableStore.filtered.length === 0}
+				<tr>
+					<td colspan="5" class="text-center">Tidak ada data</td>
+				</tr>
+			{/if}
 		</tbody>
 	</table>
 	{#if $dataTableStore.pagination}<Paginator
 			bind:settings={$dataTableStore.pagination}
 			class="mt-3"
 		/>{/if}
-	<Modal />
 </div>

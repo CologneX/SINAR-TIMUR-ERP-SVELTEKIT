@@ -26,10 +26,7 @@
 </script>
 
 
-
 <div class="modal-example-form {cBase}">
-	<!-- Enable for debugging: -->
-	<!-- <pre>{JSON.stringify(formData, null, 2)}</pre> -->
 	<form class="modal-form {cForm}" method="POST">
 		<label>
 			<span>Nama Barang</span>
@@ -62,3 +59,7 @@
     >Ubah</button>
     </footer>
 </div>
+
+
+
+

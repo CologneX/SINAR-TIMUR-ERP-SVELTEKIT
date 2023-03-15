@@ -1,20 +1,20 @@
 import { serializeNonPOJOs } from '$lib/utils';
 import { error } from '@sveltejs/kit';
 export const load = ({ locals }) => {
-	const getBarang = async () => {
+	const getSupplier = async () => {
 		try {
-			const barang = serializeNonPOJOs(
-				await locals.pb.collection('barang').getFullList(100, {
+			const supplier = serializeNonPOJOs(
+				await locals.pb.collection('supplier').getFullList(100, {
 					filter: 'status_delete=False'
 				})
 			);
-			return barang;
+			return supplier;
 		} catch (err:any) {
 			console.log(err.message);
 			return error(500, err);
 		}
 	};
 	return {
-		barang: getBarang()
+		supplier: getSupplier()
 	};
 };

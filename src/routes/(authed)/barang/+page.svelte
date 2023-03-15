@@ -6,8 +6,7 @@
 	import {
 		createDataTableStore,
 		dataTableHandler,
-		tableInteraction,
-		tableA11y
+		tableInteraction
 	} from '@skeletonlabs/skeleton';
 
 
@@ -15,10 +14,10 @@
 	import { GradientHeading } from '@skeletonlabs/skeleton';
 	import { Modal, modalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings, ModalComponent } from '@skeletonlabs/skeleton';
-	import { triggerHapus } from '$lib/utilities/Modal/TempDeleteModal';
+	import { triggerHapus } from '$lib/utilities/Modal/Barang/TempDeleteModal';
 	import { rupiah } from '$lib/utils.js';
-	import TempCreateModal from '$lib/utilities/Modal/TempCreateModal.svelte';
-	import TempEditModal from '$lib/utilities/Modal/TempEditModal.svelte';
+	import TempCreateModal from '$lib/utilities/Modal/Barang/TempCreateModal.svelte';
+	import TempEditModal from '$lib/utilities/Modal/Barang/TempEditModal.svelte';
 	import PocketBase from 'pocketbase';
 	import { onMount } from 'svelte';
 	const pb = new PocketBase('http://127.0.0.1:8090');
@@ -34,13 +33,6 @@
 	);
 	dataTableStore.subscribe((barang) => dataTableHandler(barang));
 
-	//let var tipeHtml from TempCreateModal.svelte = 'barang'
-	export let tipeHtml = 'Barang';
-
-	//export tipeHtml to TempCreateModal.svelte
-	$: tipeHtml = 'Barang';
-
-
 	
 	function tambahBarang(): void {
 		const c: ModalComponent = { ref: TempCreateModal };
@@ -49,13 +41,9 @@
 			title: 'Masukkan Barang Baru',
 			body: 'Informasi Barang Baru',
 			component: c,
-			response: (r: any) => {
-				if (r) console.log('response:', r);
-			}
 		};
 		modalStore.trigger(d);
 	}
-
 
 	//Subscribe to changes in barang collection
 	onMount(async () => {
@@ -85,11 +73,8 @@
 			type: 'component',
 			title: 'Update Barang '+ barang.find((items) => items.id === id).namaBarang,
 			body: 'Informasi Barang',
-			meta: { barang: barang.find((items) => items.id === id) },
+			meta: { barang: barang.find((items) => items.id === id), tabel: 'Barang' },
 			component: c,
-			response: (r: any) => {
-				if (r) console.log('response:', r);
-			}
 		};
 		modalStore.trigger(d);
 	}
@@ -109,15 +94,15 @@
 		direction="bg-gradient-to-r"
 		from="from-primary-500"
 		to="to-secondary-500"
-		class="mb-2">Barang</GradientHeading
+		class="mb-2 text-6xl">BARANG</GradientHeading
 	>
 	<!-- <h1 class="w-1/9 text-transparent bg-gradient-to-r from-primary-500 to-secondary-500 text-transparent bg-clip-text">Barang</h1> -->
-	<div class="grid grid-cols-2 items-center gap-1">
+	<div class="flex p-1 gap-2 items-center">
 		<input
 			bind:value={$dataTableStore.search}
 			type="search"
 			placeholder="Cari Barang..."
-			class="mt-2 mb-2 w-1/2 focus:w-full"
+			class="mt-2 mb-2 flex-auto"
 		/>
 		<div class="flex justify-end">
 			<button class="btn btn-ghost-secondary btn-base" on:click={refresh}
@@ -173,7 +158,7 @@
 					<td class="table-cell-fit">{row.id}</td>
 					<td>{row.namaBarang}</td>
 					<td>{rupiah(row.hargaBarang)}</td>
-					<td>{row.stokBarang}</td>
+					<td>{row.stokBarang} {row.satuanBarang}</td>
 					<td>{row.lokasiBarang}</td>
 					<td>{row.keteranganBarang}</td>
 					<td class="table-cell-fit"
@@ -186,6 +171,11 @@
 					>
 				</tr>
 			{/each}
+			{#if $dataTableStore.filtered.length === 0}
+				<tr>
+					<td colspan="7" class="text-center">Tidak ada data</td>
+				</tr>
+			{/if}
 		</tbody>
 	</table>
 	{#if $dataTableStore.pagination}<Paginator
